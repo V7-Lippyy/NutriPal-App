@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Base night theme -->
+    <style name="Theme.NutriPal" parent="@android:style/Theme.Material.NoActionBar">
+        <!-- Primary brand color -->
+        <item name="android:colorPrimary">@color/primary_color</item>
+        <item name="android:colorPrimaryDark">@color/primary_variant_color</item>
+        <item name="android:colorAccent">@color/secondary_color</item>
+
+        <!-- Enable window content transitions -->
+        <item name="android:windowActivityTransitions">true</item>
+    </style>
+
+    <!-- Transparent status bar theme for night mode -->
+    <style name="Theme.NutriPal.Transparent" parent="Theme.NutriPal">
+        <!-- Status bar settings -->
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:windowTranslucentStatus">false</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+
+        <!-- Navigation bar settings -->
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowTranslucentNavigation">false</item>
+    </style>
+</resources>

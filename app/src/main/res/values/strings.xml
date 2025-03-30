@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">NutriPal</string>
+    <string name="splash">Splash</string>
+    <string name="home">Beranda</string>
+    <string name="bmi">BMI</string>
+    <string name="daily_calorie">Kalori</string>
+    <string name="physical_activity">Aktivitas</string>
+    <string name="nutrition">Nutrisi</string>
+    <string name="food_log">Catatan</string>
+    <string name="food_log_add">Tambah Makanan</string>
+    <string name="food_log_edit">Edit Makanan</string>
+
+    <!-- Common -->
+    <string name="calculate">Hitung</string>
+    <string name="age">Umur</string>
+    <string name="height">Tinggi Badan (cm)</string>
+    <string name="weight">Berat Badan (kg)</string>
+    <string name="gender">Jenis Kelamin</string>
+    <string name="male">Laki-laki</string>
+    <string name="female">Perempuan</string>
+    <string name="result">Hasil</string>
+    <string name="error_field_required">Wajib diisi</string>
+    <string name="error_field_numeric">Masukkan angka yang valid</string>
+
+    <!-- BMI Screen -->
+    <string name="bmi_title">Kalkulator BMI</string>
+    <string name="bmi_result">Hasil BMI</string>
+    <string name="bmi_category">Kategori</string>
+    <string name="bmi_underweight">Kurus</string>
+    <string name="bmi_normal">Normal</string>
+    <string name="bmi_overweight">Gemuk</string>
+    <string name="bmi_obese">Obesitas</string>
+
+    <!-- Daily Calorie Screen -->
+    <string name="daily_calorie_title">Kalori Harian</string>
+    <string name="current_weight">Berat Badan Saat Ini (kg)</string>
+    <string name="target_weight">Berat Badan Target (kg)</string>
+    <string name="target_weeks">Target Waktu (minggu)</string>
+    <string name="daily_calorie_result">Kebutuhan Kalori Harian</string>
+    <string name="daily_calorie_recommendation">Rekomendasi</string>
+    <string name="goal_lose_weight">Menurunkan Berat Badan</string>
+    <string name="goal_maintain_weight">Mempertahankan Berat Badan</string>
+    <string name="goal_gain_weight">Menaikkan Berat Badan</string>
+
+    <!-- Physical Activity Screen -->
+    <string name="physical_activity_title">Aktivitas Fisik</string>
+    <string name="activity_type">Jenis Aktivitas</string>
+    <string name="activity_duration">Durasi (menit)</string>
+    <string name="activity_result">Kalori Terbakar</string>
+
+    <!-- Nutrition Screen -->
+    <string name="nutrition_title">Informasi Nutrisi</string>
+    <string name="search_food">Cari makanan atau minuman…</string>
+    <string name="serving_size">Ukuran Porsi</string>
+    <string name="calories">Kalori</string>
+    <string name="protein">Protein</string>
+    <string name="fat">Lemak</string>
+    <string name="carbohydrates">Karbohidrat</string>
+    <string name="search">Cari</string>
+
+    <!-- Food Log Screen -->
+    <string name="food_log_title">Catatan Makanan Harian</string>
+    <string name="food_log_add_title">Tambah Makanan</string>
+    <string name="food_log_edit_title">Edit Makanan</string>
+    <string name="food_name">Nama Makanan</string>
+    <string name="food_serving_size">Ukuran Porsi</string>
+    <string name="food_serving_unit">Satuan</string>
+    <string name="food_calories">Kalori</string>
+    <string name="food_protein">Protein (g)</string>
+    <string name="food_carbs">Karbohidrat (g)</string>
+    <string name="food_fat">Lemak (g)</string>
+    <string name="food_fiber">Serat (g)</string>
+    <string name="food_sugar">Gula (g)</string>
+    <string name="food_notes">Catatan</string>
+    <string name="food_meal_type">Waktu Makan</string>
+    <string name="food_breakfast">Sarapan</string>
+    <string name="food_lunch">Makan Siang</string>
+    <string name="food_dinner">Makan Malam</string>
+    <string name="food_snack">Cemilan</string>
+    <string name="food_search">Cari Makanan</string>
+    <string name="food_search_results">Hasil Pencarian</string>
+    <string name="food_detail">Detail Makanan</string>
+    <string name="food_save">Simpan</string>
+    <string name="food_update">Perbarui</string>
+    <string name="food_daily_summary">Ringkasan Hari Ini</string>
+    <string name="food_empty_state">Belum ada catatan makanan</string>
+    <string name="food_empty_state_hint">Tekan tombol + untuk menambahkan makanan yang dikonsumsi</string>
+    <string name="total_calories">Total Kalori</string>
+    <string name="onboarding">Onboarding</string>
+</resources>

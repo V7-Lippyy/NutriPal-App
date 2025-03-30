@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="primary_color">#4CAF50</color>
+    <color name="primary_variant_color">#388E3C</color>
+    <color name="secondary_color">#66BB6A</color>
+    <color name="secondary_variant_color">#43A047</color>
+    <color name="underweight_color">#64B5F6</color>
+    <color name="normal_weight_color">#81C784</color>
+    <color name="overweight_color">#FFB74D</color>
+    <color name="obese_color">#E57373</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="light_background">#F5F5F5</color>
+    <color name="dark_background">#121212</color>
+</resources>
