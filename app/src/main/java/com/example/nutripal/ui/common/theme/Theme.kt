@@ -18,30 +18,60 @@ import androidx.core.view.WindowCompat
 
 private val LightColorScheme = lightColorScheme(
     primary = PrimaryColor,
+    onPrimary = Color.White,
+    primaryContainer = PrimaryColor.copy(alpha = 0.15f),
+    onPrimaryContainer = PrimaryColor,
     secondary = SecondaryColor,
+    onSecondary = Color.White,
+    secondaryContainer = SecondaryColor.copy(alpha = 0.15f),
+    onSecondaryContainer = SecondaryColor,
+    tertiary = AccentBlue,
+    onTertiary = Color.White,
+    tertiaryContainer = AccentBlue.copy(alpha = 0.15f),
+    onTertiaryContainer = AccentBlue,
+    error = ErrorColor,
+    onError = Color.White,
+    errorContainer = ErrorColor.copy(alpha = 0.15f),
+    onErrorContainer = ErrorColor,
     background = LightBackground,
-    surface = LightSurface,
-    onPrimary = LightOnBackground,
-    onSecondary = LightOnBackground,
     onBackground = LightOnBackground,
-    onSurface = LightOnBackground
+    surface = LightSurface,
+    onSurface = LightOnBackground,
+    surfaceVariant = LightBackground.copy(alpha = 0.7f),
+    onSurfaceVariant = LightOnBackground.copy(alpha = 0.7f),
+    outline = LightOnBackground.copy(alpha = 0.3f)
 )
 
 private val DarkColorScheme = darkColorScheme(
     primary = PrimaryColor,
+    onPrimary = Color.White,
+    primaryContainer = PrimaryColor.copy(alpha = 0.2f),
+    onPrimaryContainer = PrimaryColor,
     secondary = SecondaryColor,
+    onSecondary = Color.White,
+    secondaryContainer = SecondaryColor.copy(alpha = 0.2f),
+    onSecondaryContainer = SecondaryColor,
+    tertiary = AccentBlue,
+    onTertiary = Color.White,
+    tertiaryContainer = AccentBlue.copy(alpha = 0.2f),
+    onTertiaryContainer = AccentBlue,
+    error = ErrorColor,
+    onError = Color.White,
+    errorContainer = ErrorColor.copy(alpha = 0.2f),
+    onErrorContainer = ErrorColor,
     background = DarkBackground,
-    surface = DarkSurface,
-    onPrimary = DarkOnBackground,
-    onSecondary = DarkOnBackground,
     onBackground = DarkOnBackground,
-    onSurface = DarkOnBackground
+    surface = DarkSurface,
+    onSurface = DarkOnBackground,
+    surfaceVariant = DarkBackground.copy(alpha = 0.7f),
+    onSurfaceVariant = DarkOnBackground.copy(alpha = 0.7f),
+    outline = DarkOnBackground.copy(alpha = 0.3f)
 )
 
 @Composable
 fun NutriPalTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false, // Set to false by default for consistent branding
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
@@ -58,9 +88,15 @@ fun NutriPalTheme(
         SideEffect {
             val window = (view.context as Activity).window
 
-            // Ensure system bars are transparent
-            window.statusBarColor = Color.Transparent.toArgb()
-            window.navigationBarColor = Color.Transparent.toArgb()
+            // Set transparency with a slight color tint from the primary color
+            val statusBarColor = if (darkTheme) {
+                Color.Transparent.copy(alpha = 0.3f).toArgb()
+            } else {
+                Color.Transparent.toArgb()
+            }
+
+            window.statusBarColor = statusBarColor
+            window.navigationBarColor = statusBarColor
 
             // Set the appearance of system bars
             WindowCompat.getInsetsController(window, view).apply {

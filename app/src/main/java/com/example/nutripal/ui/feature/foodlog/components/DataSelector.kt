@@ -1,10 +1,16 @@
 package com.example.nutripal.ui.feature.foodlog.components
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,18 +20,26 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowLeft
 import androidx.compose.material.icons.filled.ArrowRight
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.rounded.ChevronLeft
+import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.togetherWith
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -34,9 +48,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -54,6 +71,8 @@ fun DateSelector(
         cal.set(Calendar.DAY_OF_MONTH, 1)
         mutableStateOf(cal.time)
     }
+
+    var animateDirection by remember { mutableStateOf(0) }
 
     // Pastikan kalender selalu sesuai dengan tanggal yang dipilih
     LaunchedEffect(selectedDate) {
@@ -76,6 +95,8 @@ fun DateSelector(
         }
     }
 
+    val today = remember { Date() }
+
     val calendar = Calendar.getInstance()
     calendar.time = currentMonth
     val daysInMonth = calendar.getActualMaximum(Calendar.DAY_OF_MONTH)
@@ -89,10 +110,19 @@ fun DateSelector(
         }
     }
 
-    val monthFormatter = SimpleDateFormat("MMMM yyyy", Locale("id", "ID"))
+    val monthYearFormatter = SimpleDateFormat("MMMM yyyy", Locale("id", "ID"))
+    val monthFormatter = SimpleDateFormat("MMMM", Locale("id", "ID"))
+    val yearFormatter = SimpleDateFormat("yyyy", Locale("id", "ID"))
 
     Card(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+            .shadow(4.dp, RoundedCornerShape(16.dp)),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(
@@ -100,50 +130,123 @@ fun DateSelector(
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-            // Month selector
+            // Month-year selector with animation
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(onClick = {
-                    val cal = Calendar.getInstance()
-                    cal.time = currentMonth
-                    cal.add(Calendar.MONTH, -1)
-                    currentMonth = cal.time
-                }) {
+                IconButton(
+                    onClick = {
+                        animateDirection = -1
+                        val cal = Calendar.getInstance()
+                        cal.time = currentMonth
+                        cal.add(Calendar.MONTH, -1)
+                        currentMonth = cal.time
+                    },
+                    modifier = Modifier.size(40.dp)
+                ) {
                     Icon(
-                        imageVector = Icons.Default.ArrowLeft,
-                        contentDescription = "Bulan Sebelumnya"
+                        imageVector = Icons.Rounded.ChevronLeft,
+                        contentDescription = "Bulan Sebelumnya",
+                        tint = MaterialTheme.colorScheme.primary
                     )
                 }
 
-                Text(
-                    text = monthFormatter.format(currentMonth),
-                    style = MaterialTheme.typography.titleMedium
-                )
+                Box(contentAlignment = Alignment.Center) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        // Show month with larger, bolder text
+                        AnimatedContent(
+                            targetState = monthFormatter.format(currentMonth),
+                            transitionSpec = {
+                                if (animateDirection >= 0) {
+                                    slideIntoContainer(
+                                        towards = androidx.compose.animation.AnimatedContentTransitionScope.SlideDirection.Left,
+                                        animationSpec = tween(300)
+                                    ) togetherWith slideOutOfContainer(
+                                        towards = androidx.compose.animation.AnimatedContentTransitionScope.SlideDirection.Left,
+                                        animationSpec = tween(300)
+                                    )
+                                } else {
+                                    slideIntoContainer(
+                                        towards = androidx.compose.animation.AnimatedContentTransitionScope.SlideDirection.Right,
+                                        animationSpec = tween(300)
+                                    ) togetherWith slideOutOfContainer(
+                                        towards = androidx.compose.animation.AnimatedContentTransitionScope.SlideDirection.Right,
+                                        animationSpec = tween(300)
+                                    )
+                                }
+                            },
+                            label = "monthAnimation"
+                        ) { month ->
+                            Text(
+                                text = month,
+                                style = MaterialTheme.typography.titleLarge.copy(
+                                    fontWeight = FontWeight.Bold
+                                ),
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
 
-                IconButton(onClick = {
-                    val cal = Calendar.getInstance()
-                    cal.time = currentMonth
-                    cal.add(Calendar.MONTH, 1)
-                    currentMonth = cal.time
-                }) {
+                        // Show year with smaller text
+                        AnimatedContent(
+                            targetState = yearFormatter.format(currentMonth),
+                            transitionSpec = {
+                                if (animateDirection >= 0) {
+                                    slideIntoContainer(
+                                        towards = androidx.compose.animation.AnimatedContentTransitionScope.SlideDirection.Left,
+                                        animationSpec = tween(300)
+                                    ) togetherWith slideOutOfContainer(
+                                        towards = androidx.compose.animation.AnimatedContentTransitionScope.SlideDirection.Left,
+                                        animationSpec = tween(300)
+                                    )
+                                } else {
+                                    slideIntoContainer(
+                                        towards = androidx.compose.animation.AnimatedContentTransitionScope.SlideDirection.Right,
+                                        animationSpec = tween(300)
+                                    ) togetherWith slideOutOfContainer(
+                                        towards = androidx.compose.animation.AnimatedContentTransitionScope.SlideDirection.Right,
+                                        animationSpec = tween(300)
+                                    )
+                                }
+                            },
+                            label = "yearAnimation"
+                        ) { year ->
+                            Text(
+                                text = year,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                            )
+                        }
+                    }
+                }
+
+                IconButton(
+                    onClick = {
+                        animateDirection = 1
+                        val cal = Calendar.getInstance()
+                        cal.time = currentMonth
+                        cal.add(Calendar.MONTH, 1)
+                        currentMonth = cal.time
+                    },
+                    modifier = Modifier.size(40.dp)
+                ) {
                     Icon(
-                        imageVector = Icons.Default.ArrowRight,
-                        contentDescription = "Bulan Berikutnya"
+                        imageVector = Icons.Rounded.ChevronRight,
+                        contentDescription = "Bulan Berikutnya",
+                        tint = MaterialTheme.colorScheme.primary
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
             // Day of week headers
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                val daysOfWeek = arrayOf("Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab")
+                val daysOfWeek = arrayOf("M", "S", "S", "R", "K", "J", "S")
                 for (dayName in daysOfWeek) {
                     Box(
                         modifier = Modifier.weight(1f),
@@ -151,7 +254,10 @@ fun DateSelector(
                     ) {
                         Text(
                             text = dayName,
-                            style = MaterialTheme.typography.bodySmall
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                fontWeight = FontWeight.Medium
+                            ),
+                            color = MaterialTheme.colorScheme.primary
                         )
                     }
                 }
@@ -159,7 +265,7 @@ fun DateSelector(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Calendar grid
+            // Calendar grid with animation
             val firstCalendar = Calendar.getInstance().apply {
                 time = currentMonth
             }
@@ -181,7 +287,7 @@ fun DateSelector(
                             val date = daysInMonthList[dayIndex]
 
                             val isSelected = isSameDay(date, selectedDate)
-                            val isToday = isSameDay(date, Date())
+                            val isToday = isSameDay(date, today)
 
                             DayCell(
                                 date = date,
@@ -224,10 +330,24 @@ fun DayCell(
     calendar.time = date
     val dayOfMonth = calendar.get(Calendar.DAY_OF_MONTH)
 
-    // Tambahkan animasi scale saat tanggal dipilih
+    // Animated scale for selection
     val scale by animateFloatAsState(
         targetValue = if (isSelected) 1.15f else 1f,
-        animationSpec = tween(durationMillis = 200)
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessLow
+        ),
+        label = "dayScaleAnimation"
+    )
+
+    // Animated background color for selected day
+    val backgroundColor by animateFloatAsState(
+        targetValue = if (isSelected) 1f else 0f,
+        animationSpec = tween(
+            durationMillis = 300,
+            easing = FastOutSlowInEasing
+        ),
+        label = "dayBackgroundAnimation"
     )
 
     Box(
@@ -235,21 +355,25 @@ fun DayCell(
         modifier = modifier
             .size(40.dp)
             .padding(4.dp)
-            .scale(scale) // Tambahkan efek scale untuk animasi
+            .scale(scale) // Apply scale animation
             .clip(CircleShape)
             .background(
-                when {
+                color = when {
                     isSelected -> MaterialTheme.colorScheme.primary
-                    isToday -> MaterialTheme.colorScheme.primaryContainer
-                    else -> MaterialTheme.colorScheme.surface
+                    isToday -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                    else -> Color.Transparent
                 }
             )
             .border(
                 width = if (isToday && !isSelected) 1.dp else 0.dp,
-                color = if (isToday && !isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
+                color = if (isToday && !isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
                 shape = CircleShape
             )
-            .clickable { onClick() }
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null, // Remove ripple effect for cleaner UI
+                onClick = onClick
+            )
     ) {
         Text(
             text = dayOfMonth.toString(),
@@ -258,6 +382,7 @@ fun DayCell(
             ),
             color = when {
                 isSelected -> MaterialTheme.colorScheme.onPrimary
+                isToday -> MaterialTheme.colorScheme.primary
                 else -> MaterialTheme.colorScheme.onSurface
             },
             textAlign = TextAlign.Center

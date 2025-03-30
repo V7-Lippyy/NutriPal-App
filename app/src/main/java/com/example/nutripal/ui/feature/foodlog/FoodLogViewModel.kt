@@ -1,5 +1,7 @@
 package com.example.nutripal.ui.feature.foodlog
 
+import androidx.datastore.preferences.core.doublePreferencesKey
+import androidx.datastore.preferences.core.edit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.nutripal.data.local.entity.FoodEntry
@@ -7,6 +9,7 @@ import com.example.nutripal.domain.model.MealType
 import com.example.nutripal.domain.model.NutritionItem
 import com.example.nutripal.domain.repository.IFoodEntryRepository
 import com.example.nutripal.data.remote.api.NutritionApiService
+import com.example.nutripal.data.local.datastore.userPreferencesDataStore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -14,6 +17,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -22,13 +26,21 @@ import java.util.Date
 import java.util.Calendar
 import java.util.Locale
 import javax.inject.Inject
+import android.content.Context
 
 @HiltViewModel
 class FoodLogViewModel @Inject constructor(
     private val repository: IFoodEntryRepository,
     private val nutritionApiService: NutritionApiService,
-    private val apiKey: String
+    private val apiKey: String,
+    private val context: Context // Added context for accessing DataStore
 ) : ViewModel() {
+
+    companion object {
+        // Preference key for target calories
+        private val TARGET_CALORIES_KEY = doublePreferencesKey("target_calories")
+        private const val DEFAULT_TARGET_CALORIES = 2000.0
+    }
 
     // Date formatter for debugging
     private val dateFormatter = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
@@ -38,6 +50,12 @@ class FoodLogViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(FoodLogUiState(selectedDate = _currentSelectedDate.value))
     val uiState: StateFlow<FoodLogUiState> = _uiState.asStateFlow()
+
+    // User's target daily calories from preferences
+    private val targetCaloriesFlow = context.userPreferencesDataStore.data
+        .map { preferences ->
+            preferences[TARGET_CALORIES_KEY] ?: DEFAULT_TARGET_CALORIES
+        }
 
     // Food entries untuk tanggal yang dipilih
     val foodEntriesForSelectedDate = _currentSelectedDate
@@ -58,11 +76,31 @@ class FoodLogViewModel @Inject constructor(
             // Debug: print initial selected date
             println("Initial selected date: ${dateFormatter.format(_currentSelectedDate.value)}")
 
-            // Observer untuk tanggal yang dipilih
-            _currentSelectedDate.collect { date ->
+            // Load initial target calories
+            val initialTargetCalories = targetCaloriesFlow.first()
+            _uiState.update { it.copy(targetDailyCalories = initialTargetCalories) }
+
+            // Combine selected date, target calories, and refresh data
+            combine(
+                _currentSelectedDate,
+                targetCaloriesFlow
+            ) { date, targetCalories ->
+                Pair(date, targetCalories)
+            }.collect { (date, targetCalories) ->
                 println("Selected date changed to: ${dateFormatter.format(date)}")
+                _uiState.update { it.copy(targetDailyCalories = targetCalories) }
                 refreshDataForDate(date)
             }
+        }
+    }
+
+    // Save target calories to DataStore
+    fun updateTargetCalories(newTargetCalories: Double) {
+        viewModelScope.launch {
+            context.userPreferencesDataStore.edit { preferences ->
+                preferences[TARGET_CALORIES_KEY] = newTargetCalories
+            }
+            // We don't need to update UI state here as the flow will trigger the collector
         }
     }
 
@@ -292,6 +330,7 @@ data class FoodLogUiState(
     val selectedDate: Date = Date(),
     val totalCalories: Double = 0.0,
     val monthlyCalories: Double = 0.0,
+    val targetDailyCalories: Double = 2000.0, // Default target calories
     val isLoading: Boolean = false,
     val isSearching: Boolean = false,
     val error: String? = null,

@@ -95,11 +95,13 @@ fun FoodLogScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Summary Card
+            // Enhanced Summary Card with target calories
             EnhancedSummaryCard(
                 selectedDate = uiState.selectedDate,
                 dailyCalories = uiState.totalCalories,
-                monthlyCalories = uiState.monthlyCalories
+                monthlyCalories = uiState.monthlyCalories,
+                targetDailyCalories = uiState.targetDailyCalories, // Pass the target calories
+                onTargetCaloriesChanged = { viewModel.updateTargetCalories(it) } // Callback to update target
             )
 
             Spacer(modifier = Modifier.height(16.dp))

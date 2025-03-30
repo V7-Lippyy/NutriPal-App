@@ -1,11 +1,15 @@
 package com.example.nutripal.ui.navigation
 
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -16,8 +20,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -86,7 +92,11 @@ fun AppNavigation(
             }
 
             if (isMainScreen) {
-                NavigationBar {
+                NavigationBar(
+                    modifier = Modifier.shadow(8.dp),
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    tonalElevation = 0.dp
+                ) {
                     // Hardcoded navigation items untuk keamanan
                     val navItems = listOf(
                         Screen.Home,
@@ -100,6 +110,8 @@ fun AppNavigation(
                     navItems.forEach { screen ->
                         val hasIcon = screen.icon != null
                         if (hasIcon) {
+                            val selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true
+
                             NavigationBarItem(
                                 icon = {
                                     Icon(
@@ -111,10 +123,11 @@ fun AppNavigation(
                                     Text(
                                         text = stringResource(id = screen.resourceId),
                                         maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
+                                        overflow = TextOverflow.Ellipsis,
+                                        style = MaterialTheme.typography.labelMedium
                                     )
                                 },
-                                selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
+                                selected = selected,
                                 onClick = {
                                     navController.navigate(screen.route) {
                                         popUpTo(navController.graph.findStartDestination().id) {
@@ -123,7 +136,14 @@ fun AppNavigation(
                                         launchSingleTop = true
                                         restoreState = true
                                     }
-                                }
+                                },
+                                colors = NavigationBarItemDefaults.colors(
+                                    selectedIconColor = MaterialTheme.colorScheme.primary,
+                                    selectedTextColor = MaterialTheme.colorScheme.primary,
+                                    indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                                    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
                             )
                         }
                     }
@@ -156,7 +176,21 @@ fun AppNavigation(
                 })
             }
 
-            composable(Screen.Onboarding.route) {
+            composable(
+                route = Screen.Onboarding.route,
+                enterTransition = {
+                    slideIntoContainer(
+                        towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                        animationSpec = tween(300)
+                    )
+                },
+                exitTransition = {
+                    slideOutOfContainer(
+                        towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                        animationSpec = tween(300)
+                    )
+                }
+            ) {
                 OnboardingScreen(
                     onOnboardingComplete = {
                         navController.navigate(Screen.Home.route) {
@@ -166,7 +200,21 @@ fun AppNavigation(
                 )
             }
 
-            composable(Screen.Home.route) {
+            composable(
+                route = Screen.Home.route,
+                enterTransition = {
+                    slideIntoContainer(
+                        towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                        animationSpec = tween(300)
+                    )
+                },
+                exitTransition = {
+                    slideOutOfContainer(
+                        towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                        animationSpec = tween(300)
+                    )
+                }
+            ) {
                 HomeScreen(
                     onNavigateToBMI = { navController.navigate(Screen.BMI.route) },
                     onNavigateToCalorie = { navController.navigate(Screen.DailyCalorie.route) },
@@ -176,23 +224,93 @@ fun AppNavigation(
                 )
             }
 
-            composable(Screen.BMI.route) {
+            composable(
+                route = Screen.BMI.route,
+                enterTransition = {
+                    slideIntoContainer(
+                        towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                        animationSpec = tween(300)
+                    )
+                },
+                exitTransition = {
+                    slideOutOfContainer(
+                        towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                        animationSpec = tween(300)
+                    )
+                }
+            ) {
                 BMIScreen()
             }
 
-            composable(Screen.DailyCalorie.route) {
+            composable(
+                route = Screen.DailyCalorie.route,
+                enterTransition = {
+                    slideIntoContainer(
+                        towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                        animationSpec = tween(300)
+                    )
+                },
+                exitTransition = {
+                    slideOutOfContainer(
+                        towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                        animationSpec = tween(300)
+                    )
+                }
+            ) {
                 DailyCalorieScreen()
             }
 
-            composable(Screen.PhysicalActivity.route) {
+            composable(
+                route = Screen.PhysicalActivity.route,
+                enterTransition = {
+                    slideIntoContainer(
+                        towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                        animationSpec = tween(300)
+                    )
+                },
+                exitTransition = {
+                    slideOutOfContainer(
+                        towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                        animationSpec = tween(300)
+                    )
+                }
+            ) {
                 PhysicalActivityScreen()
             }
 
-            composable(Screen.Nutrition.route) {
+            composable(
+                route = Screen.Nutrition.route,
+                enterTransition = {
+                    slideIntoContainer(
+                        towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                        animationSpec = tween(300)
+                    )
+                },
+                exitTransition = {
+                    slideOutOfContainer(
+                        towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                        animationSpec = tween(300)
+                    )
+                }
+            ) {
                 NutritionScreen()
             }
 
-            composable(Screen.FoodLog.route) {
+            composable(
+                route = Screen.FoodLog.route,
+                enterTransition = {
+                    slideIntoContainer(
+                        towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                        animationSpec = tween(300)
+                    )
+                },
+                exitTransition = {
+                    slideOutOfContainer(
+                        towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                        animationSpec = tween(300)
+                    )
+                }
+            ) {
                 FoodLogScreen(
                     onNavigateToAddEntry = { navController.navigate(Screen.FoodLogAdd.route) },
                     onNavigateToEditEntry = { entryId ->
@@ -201,7 +319,21 @@ fun AppNavigation(
                 )
             }
 
-            composable(Screen.FoodLogAdd.route) {
+            composable(
+                route = Screen.FoodLogAdd.route,
+                enterTransition = {
+                    slideIntoContainer(
+                        towards = AnimatedContentTransitionScope.SlideDirection.Up,
+                        animationSpec = tween(300)
+                    )
+                },
+                exitTransition = {
+                    slideOutOfContainer(
+                        towards = AnimatedContentTransitionScope.SlideDirection.Down,
+                        animationSpec = tween(300)
+                    )
+                }
+            ) {
                 AddEditFoodEntryScreen(
                     onNavigateBack = { navController.popBackStack() }
                 )
@@ -209,7 +341,19 @@ fun AppNavigation(
 
             composable(
                 route = "${Screen.FoodLogEdit.route}/{entryId}",
-                arguments = listOf(navArgument("entryId") { type = NavType.LongType })
+                arguments = listOf(navArgument("entryId") { type = NavType.LongType }),
+                enterTransition = {
+                    slideIntoContainer(
+                        towards = AnimatedContentTransitionScope.SlideDirection.Up,
+                        animationSpec = tween(300)
+                    )
+                },
+                exitTransition = {
+                    slideOutOfContainer(
+                        towards = AnimatedContentTransitionScope.SlideDirection.Down,
+                        animationSpec = tween(300)
+                    )
+                }
             ) { backStackEntry ->
                 val entryId = backStackEntry.arguments?.getLong("entryId") ?: -1L
                 AddEditFoodEntryScreen(
