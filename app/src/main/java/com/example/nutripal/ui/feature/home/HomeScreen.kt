@@ -1,10 +1,13 @@
 package com.example.nutripal.ui.feature.home
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -16,6 +19,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.filled.Bedtime
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
@@ -23,12 +27,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Calculate
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.DirectionsRun
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.MonitorWeight
 import androidx.compose.material.icons.filled.Restaurant
+import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
@@ -37,6 +43,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -47,15 +54,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import coil.compose.SubcomposeAsyncImage
-import coil.request.CachePolicy
-import coil.request.ImageRequest
-import com.example.nutripal.R
+import coil.compose.AsyncImage
 import com.example.nutripal.ui.common.components.NutriPalCard
 import com.example.nutripal.ui.feature.foodlog.FoodLogViewModel
 import com.example.nutripal.ui.feature.onboarding.UserViewModel
@@ -73,11 +76,11 @@ fun HomeScreen(
     onNavigateToNutrition: () -> Unit,
     onNavigateToFoodLog: () -> Unit,
     foodLogViewModel: FoodLogViewModel = hiltViewModel(),
-    userViewModel: UserViewModel = hiltViewModel() // Tambahkan UserViewModel
+    userViewModel: UserViewModel = hiltViewModel()
 ) {
     val foodLogUiState by foodLogViewModel.uiState.collectAsState()
-    val userData by userViewModel.userData.collectAsState() // Dapatkan data pengguna
-    val today = Date() // Use java.util.Date instead of LocalDate
+    val userData by userViewModel.userData.collectAsState()
+    val today = Date()
 
     // Ensure we're looking at today's entries
     if (!isSameDay(foodLogUiState.selectedDate, today)) {
@@ -94,7 +97,7 @@ fun HomeScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp)
         ) {
-            // Tambahkan pesan selamat datang dengan nama pengguna
+            // Welcome message with user name
             if (userData.name.isNotBlank()) {
                 Text(
                     text = "Selamat Datang, ${userData.name}!",
@@ -106,21 +109,43 @@ fun HomeScreen(
                 )
             }
 
-            // Replace HomeHeader with ImageSlider
-            AutoScrollingImagePager()
+            // Banner image carousel - pure images with correct aspect ratio
+            BannerCarousel()
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Today's food summary card
-            FoodSummaryCard(
-                totalCalories = foodLogUiState.totalCalories,
-                date = today,
-                onClickViewMore = onNavigateToFoodLog
-            )
+            // Summary cards row (daily & monthly intake)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Daily intake card
+                SummaryCard(
+                    title = "Asupan Hari Ini",
+                    value = "${foodLogUiState.totalCalories.toInt()}",
+                    unit = "kkal",
+                    date = today,
+                    icon = Icons.Default.LocalFireDepartment,
+                    onClick = onNavigateToFoodLog,
+                    modifier = Modifier.weight(1f)
+                )
+
+                // Monthly intake card
+                SummaryCard(
+                    title = "Asupan Bulan Ini",
+                    value = "${foodLogUiState.monthlyCalories.toInt()}",
+                    unit = "kkal",
+                    date = today,
+                    icon = Icons.Default.TrendingUp,
+                    onClick = onNavigateToFoodLog,
+                    modifier = Modifier.weight(1f),
+                    isMonthly = true
+                )
+            }
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Feature cards
+            // Feature cards section
             Text(
                 text = "Fitur NutriPal",
                 style = MaterialTheme.typography.headlineSmall.copy(
@@ -130,63 +155,65 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Feature grid
+            // First row of feature cards (2 cards)
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 FeatureCard(
                     icon = Icons.Filled.Calculate,
                     title = "BMI",
-                    backgroundColor = MaterialTheme.colorScheme.primaryContainer,
-                    modifier = Modifier.weight(1f),
-                    onClick = onNavigateToBMI
+                    backgroundColor = Color(0xFF4682B4),
+                    onClick = onNavigateToBMI,
+                    description = "Cek indeks massa tubuh",
+                    modifier = Modifier.weight(1f)
                 )
-
-                Spacer(modifier = Modifier.width(16.dp))
 
                 FeatureCard(
                     icon = Icons.Filled.MonitorWeight,
                     title = "Kalori",
-                    backgroundColor = MaterialTheme.colorScheme.secondaryContainer,
-                    modifier = Modifier.weight(1f),
-                    onClick = onNavigateToCalorie
+                    backgroundColor = Color(0xFF4CAF50),
+                    onClick = onNavigateToCalorie,
+                    description = "Hitung kebutuhan kalori",
+                    modifier = Modifier.weight(1f)
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
+            // Second row of feature cards (2 cards)
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 FeatureCard(
                     icon = Icons.Filled.FitnessCenter,
                     title = "Aktivitas",
-                    backgroundColor = MaterialTheme.colorScheme.tertiaryContainer,
-                    modifier = Modifier.weight(1f),
-                    onClick = onNavigateToActivity
+                    backgroundColor = Color(0xFFFF9800),
+                    onClick = onNavigateToActivity,
+                    description = "Catat aktivitas fisik",
+                    modifier = Modifier.weight(1f)
                 )
-
-                Spacer(modifier = Modifier.width(16.dp))
 
                 FeatureCard(
                     icon = Icons.Filled.Restaurant,
                     title = "Nutrisi",
-                    backgroundColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.7f),
-                    modifier = Modifier.weight(1f),
-                    onClick = onNavigateToNutrition
+                    backgroundColor = Color(0xFFE91E63),
+                    onClick = onNavigateToNutrition,
+                    description = "Info kandungan nutrisi",
+                    modifier = Modifier.weight(1f)
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
+            // Third row with a single card
             FeatureCard(
                 icon = Icons.Filled.MenuBook,
                 title = "Catatan Makanan",
-                backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
-                modifier = Modifier.fillMaxWidth(),
-                onClick = onNavigateToFoodLog
+                backgroundColor = Color(0xFF673AB7),
+                onClick = onNavigateToFoodLog,
+                description = "Catat asupan makanan harian"
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -212,7 +239,7 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Recent activity
+            // Health reminder card
             NutriPalCard(
                 title = "Jaga Kesehatan Anda",
                 modifier = Modifier.fillMaxWidth()
@@ -256,13 +283,20 @@ fun HomeScreen(
                     }
                 }
             }
+
+            // Add bottom padding to avoid FAB overlap
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
 
+/**
+ * A simpler banner carousel that just shows the images without
+ * extra decorations or containers.
+ */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun AutoScrollingImagePager() {
+fun BannerCarousel() {
     // Image URLs - high resolution banner images
     val imageUrls = listOf(
         "https://media-hosting.imagekit.io/ed00fcbbeb884cd2/banner1.png?Expires=1837886746&Key-Pair-Id=K2ZIVPTIP2VGHC&Signature=D3Mcf8zpS-Uh~axf7tyaRtBP0VPO9VWEFX1g~Te-snmrUCcCMP2KPO-tbGqyE4agqQPI3OekU3Urqp-j1V9I88lwtwDsh7mYyZyzi1VRUQAV~ugqE0Clje6hx3JhsYOcXyrfaGb6XY0oyZ7dorUO3TDdpRVWPChwTLoc~opX4e83y1akJPfGZrIrEArzIekOnGZKx1K17E6qrRkhYFsIYRCCYtqnwTIhvE6D5PcCWdJdZWaxRSw1G7Z1b0yIfuOkFAI~Ma6u6q3ZtBgg6NBDW5o4ZyxUgIuVIg6GOQtBDwP4E3WHbaNufVezIOqZRGru9-40JtMKSEfy00Q6AUS9OQ__",
@@ -271,7 +305,7 @@ fun AutoScrollingImagePager() {
         "https://media-hosting.imagekit.io/cd5d2a047f1e4459/banner1%20(4).png?Expires=1837886746&Key-Pair-Id=K2ZIVPTIP2VGHC&Signature=Z5~BrIyc-CXWSQciJhPj45OVixOiqBFHKB9KU001CvvPt1HHJZ6ON6MikqN3A2pVHWW5zHn8ta5bh3JiTuQbW46VJR8NNe9vtLgp1npPTjS679MOhHeV7I0fHAqJ0Ps1K5Vxw8ZdsyVfx-vDMh4hWprA7SK4AebktDUW6-puKDewT7xEUtJiY2Spdej2u6GJX0LHFG6VLqBK7Ncbef49TvonNXsS0U4RzQCsooYi6KZRByqoWZp25glJ7ONhfuf5j46ip-atcPGurG6~QJ3avj60lTaoE62k5iR7hsxe2Ntn17lLfKA-TgrP8-EVMJgNThKEXYlqpvgVL7M9MiS1qQ__"
     )
 
-    val pagerState = rememberPagerState { imageUrls.size }
+    val pagerState = rememberPagerState(pageCount = { imageUrls.size })
 
     // Auto-scrolling effect
     LaunchedEffect(Unit) {
@@ -282,51 +316,22 @@ fun AutoScrollingImagePager() {
         }
     }
 
+    // Just the pager with images at the correct aspect ratio, no card or other decorations
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            // Set height based on 1920x600 aspect ratio (600/1920 = 0.3125)
             .aspectRatio(1920f / 600f)
-            .clip(RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(8.dp))
     ) {
         HorizontalPager(
             state = pagerState,
             modifier = Modifier.fillMaxSize()
         ) { page ->
-            val context = LocalContext.current
-            SubcomposeAsyncImage(
-                model = ImageRequest.Builder(context)
-                    .data(imageUrls[page])
-                    .crossfade(true)
-                    .diskCachePolicy(CachePolicy.ENABLED)
-                    .memoryCachePolicy(CachePolicy.ENABLED)
-                    .build(),
+            AsyncImage(
+                model = imageUrls[page],
                 contentDescription = "Banner image ${page + 1}",
                 contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize(),
-                loading = {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        // You can use a CircularProgressIndicator here if you want
-                        Surface(
-                            color = MaterialTheme.colorScheme.surfaceVariant,
-                            modifier = Modifier.fillMaxSize()
-                        ) {}
-                    }
-                },
-                error = {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Surface(
-                            color = MaterialTheme.colorScheme.errorContainer,
-                            modifier = Modifier.fillMaxSize()
-                        ) {}
-                    }
-                }
+                modifier = Modifier.fillMaxSize()
             )
         }
     }
@@ -334,23 +339,123 @@ fun AutoScrollingImagePager() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FoodSummaryCard(
-    totalCalories: Double,
+fun FeatureCard(
+    icon: ImageVector,
+    title: String,
+    backgroundColor: Color,
+    onClick: () -> Unit,
+    description: String,
+    modifier: Modifier = Modifier
+) {
+    // Gunakan isSystemInDarkTheme untuk mendeteksi mode gelap atau terang
+    val isDarkMode = isSystemInDarkTheme()
+
+    // Pilih warna kontainer berdasarkan mode
+    val containerColor = if (isDarkMode) {
+        // Warna gelap yang hampir sama dengan latar belakang di dark mode
+        // Gunakan opacity yang sangat rendah agar tidak terlihat seperti kotak dalam kotak
+        MaterialTheme.colorScheme.surface.copy(alpha = 0.7f)
+    } else {
+        // Warna putih untuk light mode
+        Color.White
+    }
+
+    Card(
+        modifier = modifier
+            .height(70.dp)
+            .border(
+                width = 1.dp,
+                color = if (isDarkMode)
+                    MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+                else
+                    MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
+                shape = RoundedCornerShape(16.dp)
+            ),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = if (isDarkMode) 0.dp else 0.5.dp,
+            pressedElevation = if (isDarkMode) 0.5.dp else 1.dp
+        ),
+        colors = CardDefaults.cardColors(
+            containerColor = containerColor
+        )
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxSize()
+                .clickable(onClick = onClick)
+                .padding(horizontal = 16.dp)
+        ) {
+            // Icon with background
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(backgroundColor)
+                    .padding(8.dp)
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = title,
+                    modifier = Modifier.size(20.dp),
+                    tint = Color.White
+                )
+            }
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyLarge.copy(
+                    fontWeight = FontWeight.Medium
+                ),
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.weight(1f)
+            )
+
+            Icon(
+                imageVector = Icons.Filled.ChevronRight,
+                contentDescription = "Navigate",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                modifier = Modifier.size(20.dp)
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SummaryCard(
+    title: String,
+    value: String,
+    unit: String,
     date: Date,
-    onClickViewMore: () -> Unit
+    icon: ImageVector,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    isMonthly: Boolean = false
 ) {
     val dateFormatter = SimpleDateFormat("EEEE, d MMMM yyyy", Locale("id", "ID"))
-    val formattedDate = dateFormatter.format(date)
+    val monthFormatter = SimpleDateFormat("MMMM yyyy", Locale("id", "ID"))
+
+    val formattedDate = if (isMonthly) {
+        monthFormatter.format(date)
+    } else {
+        dateFormatter.format(date)
+    }
 
     ElevatedCard(
-        onClick = onClickViewMore,
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        modifier = Modifier.fillMaxWidth()
+        onClick = onClick,
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        shape = RoundedCornerShape(12.dp),
+        modifier = modifier
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(12.dp)
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -358,57 +463,52 @@ fun FoodSummaryCard(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
-                    text = "Asupan Hari Ini",
+                    text = title,
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.Bold
                     )
                 )
-
-                Text(
-                    text = formattedDate,
-                    style = MaterialTheme.typography.bodySmall
-                )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Text(
+                text = formattedDate,
+                style = MaterialTheme.typography.bodySmall
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Start,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Icon(
-                    imageVector = Icons.Default.LocalFireDepartment,
+                    imageVector = icon,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(48.dp)
+                    modifier = Modifier.size(32.dp)
                 )
 
-                Spacer(modifier = Modifier.width(16.dp))
+                Spacer(modifier = Modifier.width(12.dp))
 
-                Column {
-                    Text(
-                        text = "${totalCalories.toInt()} kkal",
-                        style = MaterialTheme.typography.headlineMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
+                Text(
+                    text = value,
+                    style = MaterialTheme.typography.headlineSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
                     )
+                )
 
-                    Text(
-                        text = "Total kalori hari ini",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
+                Spacer(modifier = Modifier.width(4.dp))
+
+                Text(
+                    text = unit,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.align(Alignment.Bottom)
+                )
             }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = "Klik untuk melihat detail catatan makanan hari ini",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.outline,
-                modifier = Modifier.align(Alignment.End)
-            )
         }
     }
 }
@@ -424,49 +524,6 @@ private fun isSameDay(date1: Date, date2: Date): Boolean {
             cal1.get(Calendar.DAY_OF_MONTH) == cal2.get(Calendar.DAY_OF_MONTH)
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun FeatureCard(
-    icon: ImageVector,
-    title: String,
-    backgroundColor: Color,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    ElevatedCard(
-        onClick = onClick,
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = backgroundColor),
-        modifier = modifier
-            .height(120.dp)
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(8.dp)
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = title,
-                modifier = Modifier.size(36.dp),
-                tint = MaterialTheme.colorScheme.onPrimaryContainer
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    fontWeight = FontWeight.Bold
-                ),
-                textAlign = TextAlign.Center
-            )
-        }
-    }
-}
-
 data class HealthTip(
     val title: String,
     val description: String,
@@ -475,38 +532,91 @@ data class HealthTip(
 
 @Composable
 fun HealthTipCard(tip: HealthTip) {
+    // Gunakan isSystemInDarkTheme untuk mendeteksi mode gelap atau terang
+    val isDarkMode = isSystemInDarkTheme()
+
+    // Pilih warna kontainer berdasarkan mode - dengan sentuhan warna berbeda
+    val containerColor = if (isDarkMode) {
+        // Sedikit warna primer dengan transparansi tinggi untuk mode gelap
+        MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
+    } else {
+        // Warna primer yang sangat ringan untuk mode terang
+        MaterialTheme.colorScheme.primary.copy(alpha = 0.04f)
+    }
+
     Card(
         modifier = Modifier
             .width(280.dp)
-            .height(160.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            .height(160.dp)
+            .border(
+                width = 1.dp,
+                color = if (isDarkMode)
+                    MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+                else
+                    MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                shape = RoundedCornerShape(16.dp)
+            ),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 0.dp,
+            pressedElevation = 0.dp
+        ),
+        colors = CardDefaults.cardColors(
+            containerColor = containerColor
+        )
     ) {
+        // Highlight di bagian atas card
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(4.dp)
+                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
+        )
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(16.dp)
         ) {
-            Icon(
-                imageVector = tip.icon,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(32.dp)
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = tip.title,
-                style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.Bold
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Icon dengan style yang berbeda dari FeatureCard
+                Icon(
+                    imageVector = tip.icon,
+                    contentDescription = null,
+                    modifier = Modifier.size(28.dp),
+                    tint = MaterialTheme.colorScheme.primary
                 )
+
+                Spacer(modifier = Modifier.width(12.dp))
+
+                Text(
+                    text = tip.title,
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Bold
+                    ),
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Garis pembatas tipis
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
             )
 
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             Text(
                 text = tip.description,
-                style = MaterialTheme.typography.bodySmall
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.fillMaxWidth()
             )
         }
     }
@@ -532,7 +642,7 @@ fun getHealthTips(): List<HealthTip> {
         HealthTip(
             title = "Cukup Istirahat",
             description = "Tidur 7-9 jam setiap malam untuk membantu tubuh pulih dan menjaga keseimbangan hormon.",
-            icon = Icons.Default.MonitorWeight
+            icon = Icons.Default.Bedtime // Menggunakan icon tempat tidur yang lebih sesuai
         )
     )
 }

@@ -2,14 +2,23 @@ package com.example.nutripal.ui.navigation
 
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -19,11 +28,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -92,59 +105,52 @@ fun AppNavigation(
             }
 
             if (isMainScreen) {
-                NavigationBar(
-                    modifier = Modifier.shadow(8.dp),
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    tonalElevation = 0.dp
+                // Custom floating bottom navigation bar
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 0.dp, vertical = 6.dp) // Remove padding to avoid visible "box"
                 ) {
-                    // Hardcoded navigation items untuk keamanan
-                    val navItems = listOf(
-                        Screen.Home,
-                        Screen.BMI,
-                        Screen.DailyCalorie,
-                        Screen.PhysicalActivity,
-                        Screen.Nutrition,
-                        Screen.FoodLog
-                    )
+                    // Navigation row without visible container box
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp) // Slightly taller
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceAround,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Hardcoded navigation items untuk keamanan
+                        val navItems = listOf(
+                            Screen.Home,
+                            Screen.BMI,
+                            Screen.DailyCalorie,
+                            Screen.PhysicalActivity,
+                            Screen.Nutrition,
+                            Screen.FoodLog
+                        )
 
-                    navItems.forEach { screen ->
-                        val hasIcon = screen.icon != null
-                        if (hasIcon) {
-                            val selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true
+                        navItems.forEach { screen ->
+                            val hasIcon = screen.icon != null
+                            if (hasIcon) {
+                                val selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true
 
-                            NavigationBarItem(
-                                icon = {
-                                    Icon(
-                                        imageVector = screen.icon!!,  // Safe karena sudah dicek dengan hasIcon
-                                        contentDescription = stringResource(id = screen.resourceId)
-                                    )
-                                },
-                                label = {
-                                    Text(
-                                        text = stringResource(id = screen.resourceId),
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                        style = MaterialTheme.typography.labelMedium
-                                    )
-                                },
-                                selected = selected,
-                                onClick = {
-                                    navController.navigate(screen.route) {
-                                        popUpTo(navController.graph.findStartDestination().id) {
-                                            saveState = true
+                                // Custom nav item
+                                CustomBottomNavItem(
+                                    icon = screen.icon!!,
+                                    label = stringResource(id = screen.resourceId),
+                                    selected = selected,
+                                    onClick = {
+                                        navController.navigate(screen.route) {
+                                            popUpTo(navController.graph.findStartDestination().id) {
+                                                saveState = true
+                                            }
+                                            launchSingleTop = true
+                                            restoreState = true
                                         }
-                                        launchSingleTop = true
-                                        restoreState = true
                                     }
-                                },
-                                colors = NavigationBarItemDefaults.colors(
-                                    selectedIconColor = MaterialTheme.colorScheme.primary,
-                                    selectedTextColor = MaterialTheme.colorScheme.primary,
-                                    indicatorColor = MaterialTheme.colorScheme.primaryContainer,
-                                    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
-                            )
+                            }
                         }
                     }
                 }
@@ -361,6 +367,68 @@ fun AppNavigation(
                     onNavigateBack = { navController.popBackStack() }
                 )
             }
+        }
+    }
+}
+
+@Composable
+fun CustomBottomNavItem(
+    icon: ImageVector,
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val unselectedColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+        modifier = Modifier
+            .clickable(onClick = onClick)
+            .padding(4.dp)
+            .width(56.dp) // Lebih kecil karena navbar floating
+    ) {
+        // Icon dengan indikator saat dipilih
+        Box(
+            contentAlignment = Alignment.Center
+        ) {
+            // Icon dengan background lingkaran saat dipilih
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .size(36.dp)
+                    .then(
+                        if (selected) {
+                            Modifier.background(
+                                color = primaryColor.copy(alpha = 0.15f),
+                                shape = CircleShape
+                            )
+                        } else Modifier
+                    )
+                    .padding(6.dp)
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = label,
+                    tint = if (selected) primaryColor else unselectedColor,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+        }
+
+        // Label yang kompak
+        if (selected) {
+            // Hanya tampilkan label jika item dipilih
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                fontSize = 9.sp,
+                color = primaryColor,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.padding(top = 2.dp)
+            )
         }
     }
 }
