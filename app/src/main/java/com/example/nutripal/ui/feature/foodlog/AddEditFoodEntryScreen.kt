@@ -1,5 +1,6 @@
 package com.example.nutripal.ui.feature.foodlog
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -35,7 +36,6 @@ import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -68,6 +68,7 @@ fun AddEditFoodEntryScreen(
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val focusManager = LocalFocusManager.current
+    val scrollState = rememberScrollState()
 
     // Form state
     var foodName by remember { mutableStateOf("") }
@@ -142,315 +143,307 @@ fun AddEditFoodEntryScreen(
                 }
             )
         },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
-        Box(
+        // Content wrapper
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
+                .padding(top = paddingValues.calculateTopPadding())
+                .padding(horizontal = 16.dp)
+                .verticalScroll(scrollState)
+                .animateContentSize(),
+            verticalArrangement = Arrangement.Top
         ) {
-            Column(
+            // Date Selector Card
+            OutlinedCard(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .padding(16.dp)
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
+                onClick = { showDatePicker = true }
             ) {
-                // Date Selector Card
-                OutlinedCard(
-                    modifier = Modifier.fillMaxWidth(),
-                    onClick = { showDatePicker = true }
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.CalendarMonth,
-                            contentDescription = "Pilih Tanggal",
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-
-                        Spacer(modifier = Modifier.padding(8.dp))
-
-                        Column {
-                            Text(
-                                text = "Tanggal",
-                                style = MaterialTheme.typography.labelMedium
-                            )
-
-                            Text(
-                                text = dateFormatter.format(selectedDate),
-                                style = MaterialTheme.typography.bodyLarge.copy(
-                                    fontWeight = FontWeight.Bold
-                                )
-                            )
-                        }
-                    }
-                }
-
-                if (showDatePicker) {
-                    DatePickerDialog(
-                        onDismissRequest = { showDatePicker = false },
-                        confirmButton = {
-                            TextButton(onClick = {
-                                datePickerState.selectedDateMillis?.let { millis ->
-                                    // Standardisasi tanggal ke jam 12 siang
-                                    val calendar = Calendar.getInstance()
-                                    calendar.timeInMillis = millis
-                                    calendar.set(Calendar.HOUR_OF_DAY, 12)
-                                    calendar.set(Calendar.MINUTE, 0)
-                                    calendar.set(Calendar.SECOND, 0)
-                                    calendar.set(Calendar.MILLISECOND, 0)
-
-                                    selectedDate = calendar.time
-                                }
-                                showDatePicker = false
-                            }) {
-                                Text("OK")
-                            }
-                        },
-                        dismissButton = {
-                            TextButton(onClick = { showDatePicker = false }) {
-                                Text("Batal")
-                            }
-                        }
-                    ) {
-                        DatePicker(state = datePickerState)
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Food search
-                Text(
-                    text = "Cari Makanan",
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    TextField(
-                        value = searchQuery,
-                        onValueChange = { searchQuery = it },
-                        placeholder = { Text("Cari makanan...") },
-                        modifier = Modifier.weight(1f),
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search)
+                    Icon(
+                        imageVector = Icons.Default.CalendarMonth,
+                        contentDescription = "Pilih Tanggal",
+                        tint = MaterialTheme.colorScheme.primary
                     )
 
-                    IconButton(
-                        onClick = {
-                            focusManager.clearFocus()
-                            viewModel.searchFoodNutrition(searchQuery)
-                        }
-                    ) {
-                        Icon(Icons.Default.Search, contentDescription = "Cari")
-                    }
-                }
+                    Spacer(modifier = Modifier.padding(8.dp))
 
-                // Search results
-                if (uiState.isSearching) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(100.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
-                    }
-                } else if (uiState.searchResults.isNotEmpty()) {
-                    Text(
-                        text = "Hasil Pencarian",
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    )
+                    Column {
+                        Text(
+                            text = "Tanggal",
+                            style = MaterialTheme.typography.labelMedium
+                        )
 
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 16.dp)
-                    ) {
-                        uiState.searchResults.forEach { nutritionItem ->
-                            NutritionSearchResultItem(
-                                nutritionItem = nutritionItem,
-                                onClick = {
-                                    // Populate form with search result
-                                    foodName = nutritionItem.name
-                                    servingSize = nutritionItem.servingSizeGram.toString()
-                                    servingUnit = "g"
-                                    calories = nutritionItem.calories.toString()
-                                    protein = nutritionItem.proteinGram.toString()
-                                    carbs = nutritionItem.totalCarbohydratesGram.toString()
-                                    fat = nutritionItem.totalFatGram.toString()
-                                    fiber = nutritionItem.fiberGram.toString()
-                                    sugar = nutritionItem.sugarGram.toString()
-
-                                    // Clear search
-                                    searchQuery = ""
-                                    viewModel.clearSearch()
-                                }
+                        Text(
+                            text = dateFormatter.format(selectedDate),
+                            style = MaterialTheme.typography.bodyLarge.copy(
+                                fontWeight = FontWeight.Bold
                             )
-
-                            Spacer(modifier = Modifier.height(8.dp))
-                        }
+                        )
                     }
                 }
+            }
 
-                Spacer(modifier = Modifier.height(16.dp))
+            if (showDatePicker) {
+                DatePickerDialog(
+                    onDismissRequest = { showDatePicker = false },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            datePickerState.selectedDateMillis?.let { millis ->
+                                // Standardisasi tanggal ke jam 12 siang
+                                val calendar = Calendar.getInstance()
+                                calendar.timeInMillis = millis
+                                calendar.set(Calendar.HOUR_OF_DAY, 12)
+                                calendar.set(Calendar.MINUTE, 0)
+                                calendar.set(Calendar.SECOND, 0)
+                                calendar.set(Calendar.MILLISECOND, 0)
 
-                // Manual entry form
-                Text(
-                    text = "Detail Makanan",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold
-                    ),
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-
-                NutriPalTextField(
-                    value = foodName,
-                    onValueChange = { foodName = it },
-                    label = "Nama Makanan",
-                    isError = foodName.isBlank(),
-                    errorMessage = "Nama makanan harus diisi"
-                )
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                selectedDate = calendar.time
+                            }
+                            showDatePicker = false
+                        }) {
+                            Text("OK")
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showDatePicker = false }) {
+                            Text("Batal")
+                        }
+                    }
                 ) {
-                    NutriPalTextField(
-                        value = servingSize,
-                        onValueChange = { servingSize = it },
-                        label = "Porsi",
-                        keyboardType = KeyboardType.Decimal,
-                        modifier = Modifier.weight(0.6f)
-                    )
-
-                    NutriPalTextField(
-                        value = servingUnit,
-                        onValueChange = { servingUnit = it },
-                        label = "Unit",
-                        modifier = Modifier.weight(0.4f)
-                    )
+                    DatePicker(state = datePickerState)
                 }
+            }
 
-                NutriPalTextField(
-                    value = calories,
-                    onValueChange = { calories = it },
-                    label = "Kalori",
-                    keyboardType = KeyboardType.Decimal
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Food search section
+            Text(
+                text = "Cari Makanan",
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.Medium
+                ),
+                modifier = Modifier.padding(bottom = 4.dp)
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                TextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    placeholder = { Text("Cari makanan...") },
+                    modifier = Modifier.weight(1f),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search)
                 )
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    NutriPalTextField(
-                        value = protein,
-                        onValueChange = { protein = it },
-                        label = "Protein (g)",
-                        keyboardType = KeyboardType.Decimal,
-                        modifier = Modifier.weight(1f)
-                    )
-
-                    NutriPalTextField(
-                        value = carbs,
-                        onValueChange = { carbs = it },
-                        label = "Karbohidrat (g)",
-                        keyboardType = KeyboardType.Decimal,
-                        modifier = Modifier.weight(1f)
-                    )
-
-                    NutriPalTextField(
-                        value = fat,
-                        onValueChange = { fat = it },
-                        label = "Lemak (g)",
-                        keyboardType = KeyboardType.Decimal,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    NutriPalTextField(
-                        value = fiber,
-                        onValueChange = { fiber = it },
-                        label = "Serat (g)",
-                        keyboardType = KeyboardType.Decimal,
-                        modifier = Modifier.weight(1f)
-                    )
-
-                    NutriPalTextField(
-                        value = sugar,
-                        onValueChange = { sugar = it },
-                        label = "Gula (g)",
-                        keyboardType = KeyboardType.Decimal,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Text(
-                    text = "Waktu Makan",
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-
-                MealTypeSelector(
-                    selectedMealType = selectedMealType,
-                    onMealTypeSelected = { selectedMealType = it }
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                NutriPalTextField(
-                    value = notes,
-                    onValueChange = { notes = it },
-                    label = "Catatan (opsional)"
-                )
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                NutriPalButton(
-                    text = if (foodEntryId != null) "Perbarui" else "Simpan",
+                IconButton(
                     onClick = {
-                        if (foodName.isBlank()) {
-                            // Show error
-                            return@NutriPalButton
-                        }
+                        focusManager.clearFocus()
+                        viewModel.searchFoodNutrition(searchQuery)
+                    }
+                ) {
+                    Icon(Icons.Default.Search, contentDescription = "Cari")
+                }
+            }
 
-                        if (foodEntryId != null) {
-                            // Update existing entry
-                            viewModel.updateFoodEntry(
-                                com.example.nutripal.data.local.entity.FoodEntry(
-                                    id = foodEntryId,
-                                    name = foodName,
-                                    servingSize = servingSize.toDoubleOrNull() ?: 0.0,
-                                    servingUnit = servingUnit,
-                                    calories = calories.toDoubleOrNull() ?: 0.0,
-                                    protein = protein.toDoubleOrNull() ?: 0.0,
-                                    carbs = carbs.toDoubleOrNull() ?: 0.0,
-                                    fat = fat.toDoubleOrNull() ?: 0.0,
-                                    fiber = fiber.toDoubleOrNull() ?: 0.0,
-                                    sugar = sugar.toDoubleOrNull() ?: 0.0,
-                                    mealType = selectedMealType.name,
-                                    date = selectedDate, // Gunakan tanggal yang dipilih melalui DatePicker
-                                    time = Date(), // Current time
-                                    notes = notes.ifBlank { null },
-                                    updatedAt = System.currentTimeMillis()
-                                )
-                            )
-                        } else {
-                            // Add new entry
-                            viewModel.addFoodEntry(
+            // Search results
+            if (uiState.isSearching) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(80.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            } else if (uiState.searchResults.isNotEmpty()) {
+                Text(
+                    text = "Hasil Pencarian",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Medium
+                    ),
+                    modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
+                )
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp)
+                ) {
+                    uiState.searchResults.forEach { nutritionItem ->
+                        NutritionSearchResultItem(
+                            nutritionItem = nutritionItem,
+                            onClick = {
+                                // Populate form with search result
+                                foodName = nutritionItem.name
+                                servingSize = nutritionItem.servingSizeGram.toString()
+                                servingUnit = "g"
+                                calories = nutritionItem.calories.toString()
+                                protein = nutritionItem.proteinGram.toString()
+                                carbs = nutritionItem.totalCarbohydratesGram.toString()
+                                fat = nutritionItem.totalFatGram.toString()
+                                fiber = nutritionItem.fiberGram.toString()
+                                sugar = nutritionItem.sugarGram.toString()
+
+                                // Clear search
+                                searchQuery = ""
+                                viewModel.clearSearch()
+                            }
+                        )
+
+                        Spacer(modifier = Modifier.height(6.dp))
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Manual entry form
+            Text(
+                text = "Detail Makanan",
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.Medium
+                ),
+                modifier = Modifier.padding(bottom = 4.dp)
+            )
+
+            NutriPalTextField(
+                value = foodName,
+                onValueChange = { foodName = it },
+                label = "Nama Makanan",
+                isError = foodName.isBlank(),
+                errorMessage = "Nama makanan harus diisi",
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                NutriPalTextField(
+                    value = servingSize,
+                    onValueChange = { servingSize = it },
+                    label = "Porsi",
+                    keyboardType = KeyboardType.Decimal,
+                    modifier = Modifier.weight(0.6f)
+                )
+
+                NutriPalTextField(
+                    value = servingUnit,
+                    onValueChange = { servingUnit = it },
+                    label = "Unit",
+                    modifier = Modifier.weight(0.4f)
+                )
+            }
+
+            NutriPalTextField(
+                value = calories,
+                onValueChange = { calories = it },
+                label = "Kalori",
+                keyboardType = KeyboardType.Decimal,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                NutriPalTextField(
+                    value = protein,
+                    onValueChange = { protein = it },
+                    label = "Protein (g)",
+                    keyboardType = KeyboardType.Decimal,
+                    modifier = Modifier.weight(1f)
+                )
+
+                NutriPalTextField(
+                    value = carbs,
+                    onValueChange = { carbs = it },
+                    label = "Karbohidrat (g)",
+                    keyboardType = KeyboardType.Decimal,
+                    modifier = Modifier.weight(1f)
+                )
+
+                NutriPalTextField(
+                    value = fat,
+                    onValueChange = { fat = it },
+                    label = "Lemak (g)",
+                    keyboardType = KeyboardType.Decimal,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                NutriPalTextField(
+                    value = fiber,
+                    onValueChange = { fiber = it },
+                    label = "Serat (g)",
+                    keyboardType = KeyboardType.Decimal,
+                    modifier = Modifier.weight(1f)
+                )
+
+                NutriPalTextField(
+                    value = sugar,
+                    onValueChange = { sugar = it },
+                    label = "Gula (g)",
+                    keyboardType = KeyboardType.Decimal,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text(
+                text = "Waktu Makan",
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.Medium
+                ),
+                modifier = Modifier.padding(bottom = 4.dp)
+            )
+
+            MealTypeSelector(
+                selectedMealType = selectedMealType,
+                onMealTypeSelected = { selectedMealType = it }
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            NutriPalTextField(
+                value = notes,
+                onValueChange = { notes = it },
+                label = "Catatan (opsional)",
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            NutriPalButton(
+                text = if (foodEntryId != null) "Perbarui" else "Simpan",
+                onClick = {
+                    if (foodName.isBlank()) {
+                        // Show error
+                        return@NutriPalButton
+                    }
+
+                    if (foodEntryId != null) {
+                        // Update existing entry
+                        viewModel.updateFoodEntry(
+                            com.example.nutripal.data.local.entity.FoodEntry(
+                                id = foodEntryId,
                                 name = foodName,
                                 servingSize = servingSize.toDoubleOrNull() ?: 0.0,
                                 servingUnit = servingUnit,
@@ -460,16 +453,40 @@ fun AddEditFoodEntryScreen(
                                 fat = fat.toDoubleOrNull() ?: 0.0,
                                 fiber = fiber.toDoubleOrNull() ?: 0.0,
                                 sugar = sugar.toDoubleOrNull() ?: 0.0,
-                                mealType = selectedMealType,
+                                mealType = selectedMealType.name,
+                                date = selectedDate, // Gunakan tanggal yang dipilih melalui DatePicker
+                                time = Date(), // Current time
                                 notes = notes.ifBlank { null },
-                                entryDate = selectedDate // Gunakan tanggal yang dipilih melalui DatePicker
+                                updatedAt = System.currentTimeMillis()
                             )
-                        }
-
-                        onNavigateBack()
+                        )
+                    } else {
+                        // Add new entry
+                        viewModel.addFoodEntry(
+                            name = foodName,
+                            servingSize = servingSize.toDoubleOrNull() ?: 0.0,
+                            servingUnit = servingUnit,
+                            calories = calories.toDoubleOrNull() ?: 0.0,
+                            protein = protein.toDoubleOrNull() ?: 0.0,
+                            carbs = carbs.toDoubleOrNull() ?: 0.0,
+                            fat = fat.toDoubleOrNull() ?: 0.0,
+                            fiber = fiber.toDoubleOrNull() ?: 0.0,
+                            sugar = sugar.toDoubleOrNull() ?: 0.0,
+                            mealType = selectedMealType,
+                            notes = notes.ifBlank { null },
+                            entryDate = selectedDate // Gunakan tanggal yang dipilih melalui DatePicker
+                        )
                     }
-                )
-            }
+
+                    onNavigateBack()
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(44.dp)
+            )
+
+            // Spacer untuk memastikan konten bisa di-scroll melewati navbar
+            Spacer(modifier = Modifier.height(56.dp))
         }
     }
 }

@@ -1,5 +1,6 @@
 package com.example.nutripal.ui.feature.activity
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -48,9 +50,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.nutripal.domain.model.PhysicalActivity
-import com.example.nutripal.ui.common.ActivityIcons
 import com.example.nutripal.ui.common.components.NutriPalButton
-import com.example.nutripal.ui.common.components.NutriPalCard
 import com.example.nutripal.ui.common.components.NutriPalTextField
 import java.text.DecimalFormat
 
@@ -69,44 +69,48 @@ fun PhysicalActivityScreen(
     }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
-        Box(
+        // Content wrapper
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
+                .padding(top = paddingValues.calculateTopPadding())
+                .padding(horizontal = 16.dp)
+                .verticalScroll(rememberScrollState())
+                .animateContentSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = "Aktivitas Fisik & Pembakaran Kalori",
-                    style = MaterialTheme.typography.headlineMedium.copy(
-                        fontWeight = FontWeight.Bold
-                    ),
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(vertical = 16.dp)
-                )
+            // Header
+            Text(
+                text = "Aktivitas Fisik & Pembakaran Kalori",
+                style = MaterialTheme.typography.headlineMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                ),
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(top = 12.dp, bottom = 8.dp)
+            )
 
-                if (!uiState.isCalculated) {
-                    ActivityInputForm(
-                        uiState = uiState,
-                        onActivitySelected = viewModel::onActivitySelected,
-                        onDurationChanged = viewModel::onDurationChanged,
-                        onWeightChanged = viewModel::onWeightChanged,
-                        onCalculateClicked = viewModel::calculateCaloriesBurned
-                    )
-                } else {
-                    ActivityResultView(
-                        uiState = uiState,
-                        onResetClicked = viewModel::resetCalculation
-                    )
-                }
+            // Main content
+            if (!uiState.isCalculated) {
+                ActivityInputForm(
+                    uiState = uiState,
+                    onActivitySelected = viewModel::onActivitySelected,
+                    onDurationChanged = viewModel::onDurationChanged,
+                    onWeightChanged = viewModel::onWeightChanged,
+                    onCalculateClicked = viewModel::calculateCaloriesBurned
+                )
+            } else {
+                ActivityResultView(
+                    uiState = uiState,
+                    onResetClicked = viewModel::resetCalculation
+                )
             }
+
+            // Spacer untuk memastikan konten dapat di-scroll melewati navbar
+            Spacer(modifier = Modifier.height(56.dp))
         }
     }
 }
@@ -119,15 +123,30 @@ fun ActivityInputForm(
     onWeightChanged: (String) -> Unit,
     onCalculateClicked: () -> Unit
 ) {
-    NutriPalCard(
-        title = "Pilih Jenis Aktivitas",
-        modifier = Modifier.fillMaxWidth()
+    // Aktivitas Section
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(
+                color = MaterialTheme.colorScheme.surface,
+                shape = RoundedCornerShape(12.dp)
+            )
+            .padding(12.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
+        Text(
+            text = "Pilih Jenis Aktivitas",
+            style = MaterialTheme.typography.titleMedium.copy(
+                fontWeight = FontWeight.Medium
+            ),
+            modifier = Modifier.padding(bottom = 4.dp)
+        )
+
         LazyVerticalGrid(
             columns = GridCells.Fixed(3),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.height(220.dp)
+            modifier = Modifier.height(210.dp)
         ) {
             items(uiState.activities) { activity ->
                 ActivityItem(
@@ -139,67 +158,101 @@ fun ActivityInputForm(
         }
     }
 
-    Spacer(modifier = Modifier.height(16.dp))
+    Spacer(modifier = Modifier.height(8.dp))
 
-    NutriPalCard(
-        title = "Detail Aktivitas",
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            NutriPalTextField(
-                value = uiState.duration,
-                onValueChange = onDurationChanged,
-                label = "Durasi (menit)",
-                keyboardType = KeyboardType.Number,
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.AccessTime,
-                        contentDescription = "Durasi"
-                    )
-                }
+    // Detail Aktivitas Section
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(
+                color = MaterialTheme.colorScheme.surface,
+                shape = RoundedCornerShape(12.dp)
             )
-
-            NutriPalTextField(
-                value = uiState.weight,
-                onValueChange = onWeightChanged,
-                label = "Berat Badan (kg)",
-                keyboardType = KeyboardType.Decimal,
-                imeAction = ImeAction.Done,
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.Scale,
-                        contentDescription = "Berat Badan"
-                    )
-                }
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            NutriPalButton(
-                text = "Hitung Kalori Terbakar",
-                onClick = onCalculateClicked
-            )
-        }
-    }
-
-    Spacer(modifier = Modifier.height(16.dp))
-
-    NutriPalCard(
-        title = "Informasi",
-        modifier = Modifier.fillMaxWidth()
+            .padding(12.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Text(
-            text = "Aktivitas fisik membantu membakar kalori dan meningkatkan kesehatan secara keseluruhan. Jumlah kalori yang terbakar bergantung pada jenis aktivitas, durasi, dan berat badan Anda.",
-            style = MaterialTheme.typography.bodyMedium
+            text = "Detail Aktivitas",
+            style = MaterialTheme.typography.titleMedium.copy(
+                fontWeight = FontWeight.Medium
+            ),
+            modifier = Modifier.padding(bottom = 4.dp)
+        )
+
+        NutriPalTextField(
+            value = uiState.duration,
+            onValueChange = onDurationChanged,
+            label = "Durasi (menit)",
+            keyboardType = KeyboardType.Number,
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Default.AccessTime,
+                    contentDescription = "Durasi"
+                )
+            },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        NutriPalTextField(
+            value = uiState.weight,
+            onValueChange = onWeightChanged,
+            label = "Berat Badan (kg)",
+            keyboardType = KeyboardType.Decimal,
+            imeAction = ImeAction.Done,
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Default.Scale,
+                    contentDescription = "Berat Badan"
+                )
+            },
+            modifier = Modifier.fillMaxWidth()
         )
 
         Spacer(modifier = Modifier.height(8.dp))
 
+        NutriPalButton(
+            text = "Hitung Kalori Terbakar",
+            onClick = onCalculateClicked,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(44.dp),
+            shape = RoundedCornerShape(10.dp)
+        )
+    }
+
+    Spacer(modifier = Modifier.height(8.dp))
+
+    // Informasi Section
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .defaultMinSize(minHeight = 10.dp)
+            .background(
+                color = MaterialTheme.colorScheme.surface,
+                shape = RoundedCornerShape(12.dp)
+            )
+            .padding(12.dp)
+    ) {
+        Text(
+            text = "Informasi",
+            style = MaterialTheme.typography.titleMedium.copy(
+                fontWeight = FontWeight.Medium
+            ),
+            modifier = Modifier.padding(bottom = 4.dp)
+        )
+
+        Text(
+            text = "Aktivitas fisik membantu membakar kalori dan meningkatkan kesehatan secara keseluruhan. Jumlah kalori yang terbakar bergantung pada jenis aktivitas, durasi, dan berat badan Anda.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        Spacer(modifier = Modifier.height(4.dp))
+
         Text(
             text = "Untuk hasil terbaik, lakukan aktivitas fisik secara teratur dan kombinasikan dengan pola makan seimbang.",
-            style = MaterialTheme.typography.bodyMedium
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
@@ -219,7 +272,7 @@ fun ActivityItem(
     val borderColor = if (isSelected) {
         MaterialTheme.colorScheme.primary
     } else {
-        Color.Transparent
+        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
     }
 
     val iconColor = if (isSelected) {
@@ -239,32 +292,33 @@ fun ActivityItem(
                 shape = RoundedCornerShape(8.dp)
             )
             .clickable(onClick = onClick)
-            .padding(8.dp)
+            .padding(6.dp)
     ) {
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
-                .size(48.dp)
+                .size(40.dp)
                 .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f))
         ) {
             activity.icon?.let {
                 Icon(
                     imageVector = it,
                     contentDescription = activity.name,
                     tint = iconColor,
-                    modifier = Modifier.size(28.dp)
+                    modifier = Modifier.size(24.dp)
                 )
             }
         }
 
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(2.dp))
 
         Text(
             text = activity.name,
             style = MaterialTheme.typography.bodySmall,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
+            color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
         )
     }
 }
@@ -281,92 +335,109 @@ fun ActivityResultView(
         val decimalFormat = DecimalFormat("#.##")
         val formattedCalories = decimalFormat.format(result.caloriesBurned)
 
-        NutriPalCard(
-            title = "Hasil Pembakaran Kalori",
-            modifier = Modifier.fillMaxWidth()
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    color = MaterialTheme.colorScheme.surface,
+                    shape = RoundedCornerShape(12.dp)
+                )
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
+            Text(
+                text = "Hasil Pembakaran Kalori",
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.Bold
+                ),
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(vertical = 8.dp)
+            ) {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .size(56.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primaryContainer)
+                ) {
+                    activity.icon?.let {
+                        Icon(
+                            imageVector = it,
+                            contentDescription = activity.name,
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                            modifier = Modifier.size(32.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.width(12.dp))
+
+                Column {
+                    Text(
+                        text = activity.name,
+                        style = MaterialTheme.typography.titleLarge
+                    )
+
+                    Text(
+                        text = "${result.durationMinutes} menit",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                ),
+                shape = RoundedCornerShape(10.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(vertical = 16.dp)
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.padding(16.dp)
                 ) {
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier
-                            .size(64.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primaryContainer)
-                    ) {
-                        activity.icon?.let {
-                            Icon(
-                                imageVector = it,
-                                contentDescription = activity.name,
-                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                                modifier = Modifier.size(36.dp)
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.width(16.dp))
-
-                    Column {
-                        Text(
-                            text = activity.name,
-                            style = MaterialTheme.typography.titleLarge
+                    Text(
+                        text = formattedCalories,
+                        style = MaterialTheme.typography.displayMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
+                    )
 
-                        Text(
-                            text = "${result.durationMinutes} menit",
-                            style = MaterialTheme.typography.bodyMedium
+                    Text(
+                        text = "Kalori terbakar",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
-                    }
+                    )
                 }
-
-                Card(
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.padding(16.dp)
-                    ) {
-                        Text(
-                            text = "$formattedCalories",
-                            style = MaterialTheme.typography.headlineLarge.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                        )
-
-                        Text(
-                            text = "Kalori terbakar",
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                color = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Text(
-                    text = getBenefitsText(activity.name),
-                    style = MaterialTheme.typography.bodyMedium,
-                    textAlign = TextAlign.Center
-                )
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                NutriPalButton(
-                    text = "Hitung Ulang",
-                    onClick = onResetClicked
-                )
             }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text(
+                text = getBenefitsText(activity.name),
+                style = MaterialTheme.typography.bodyMedium,
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 4.dp)
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            NutriPalButton(
+                text = "Hitung Ulang",
+                onClick = onResetClicked,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(44.dp),
+                shape = RoundedCornerShape(10.dp)
+            )
         }
     }
 }

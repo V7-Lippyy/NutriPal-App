@@ -1,5 +1,6 @@
 package com.example.nutripal.ui.feature.foodlog
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -59,6 +60,7 @@ fun FoodLogScreen(
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
+        containerColor = MaterialTheme.colorScheme.background,
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = onNavigateToAddEntry,
@@ -69,22 +71,24 @@ fun FoodLogScreen(
             )
         }
     ) { paddingValues ->
-        // Single scrollable column for the entire screen
+        // Content wrapper
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
-                .padding(horizontal = 12.dp)
-                .verticalScroll(scrollState),
+                .padding(top = paddingValues.calculateTopPadding())
+                .padding(horizontal = 16.dp)
+                .verticalScroll(scrollState)
+                .animateContentSize(),
             verticalArrangement = Arrangement.Top
         ) {
             // Header
             Text(
                 text = "Catatan Makanan Harian",
                 style = MaterialTheme.typography.headlineMedium.copy(
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
                 ),
-                modifier = Modifier.padding(vertical = 8.dp)
+                modifier = Modifier.padding(top = 12.dp, bottom = 8.dp)
             )
 
             // Date Selector
@@ -104,7 +108,7 @@ fun FoodLogScreen(
                 onTargetCaloriesChanged = { viewModel.updateTargetCalories(it) } // Callback to update target
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             // Main content area
             if (uiState.isLoading) {
@@ -140,14 +144,15 @@ fun FoodLogScreen(
                                 onEditClick = { onNavigateToEditEntry(entry.id) },
                                 onDeleteClick = { viewModel.deleteFoodEntry(entry) }
                             )
-                            Spacer(modifier = Modifier.height(8.dp))
+                            Spacer(modifier = Modifier.height(6.dp))
                         }
                     }
                 }
-
-                // Add extra space at the bottom to avoid FAB overlap
-                Spacer(modifier = Modifier.height(80.dp))
             }
+
+            // Spacer untuk memastikan konten bisa di-scroll melewati FAB dan navbar
+            // 56dp untuk navbar + extra space untuk FAB
+            Spacer(modifier = Modifier.height(80.dp))
         }
     }
 }
@@ -159,20 +164,20 @@ fun EmptyFoodLogState(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .padding(16.dp),
+            .padding(vertical = 8.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(24.dp),
+                .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
             Text(
                 text = "Belum ada catatan makanan",
                 style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(bottom = 8.dp)
+                modifier = Modifier.padding(bottom = 4.dp)
             )
 
             Text(
