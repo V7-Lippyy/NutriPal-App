@@ -1,6 +1,3 @@
-// TypingAnimation.kt
-// Place this in: com.example.nutripal.ui.feature.onboarding
-
 package com.example.nutripal.ui.feature.onboarding
 
 import androidx.compose.animation.AnimatedVisibility
@@ -27,6 +24,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -54,6 +52,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
@@ -62,6 +61,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.nutripal.R
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import android.util.Log
 
 // Add this composable in your OnboardingScreen.kt file
 @Composable
@@ -110,6 +110,12 @@ fun OnboardingScreen(
         uiState.errorMessage?.let {
             snackbarHostState.showSnackbar(it)
         }
+    }
+
+    // Show loading indicator when saving data
+    var isLoading by remember { mutableStateOf(false) }
+    LaunchedEffect(uiState.isLoading) {
+        isLoading = uiState.isLoading
     }
 
     Scaffold(
@@ -161,26 +167,53 @@ fun OnboardingScreen(
                     name = uiState.name,
                     onNameChanged = viewModel::updateName,
                     onSaveClicked = {
-                        coroutineScope.launch {
-                            viewModel.saveUserDataAndCompleteOnboarding {
-                                // Simpan nama untuk halaman welcome
-                                userName = uiState.name
-                                // Tampilkan halaman welcome
-                                showWelcomePage = true
+                        if (!isLoading) {
+                            coroutineScope.launch {
+                                isLoading = true
+                                viewModel.saveUserDataAndCompleteOnboarding {
+                                    // Simpan nama untuk halaman welcome
+                                    userName = uiState.name
+                                    // Tampilkan halaman welcome
+                                    showWelcomePage = true
+                                    isLoading = false
+                                }
                             }
                         }
                     },
-                    isDarkTheme = isDarkTheme
+                    isDarkTheme = isDarkTheme,
+                    isLoading = isLoading
                 )
             } else {
                 // Halaman welcome
                 ExactMatchWelcomePage(
                     name = userName,
                     onContinueClicked = {
-                        onOnboardingComplete()
+                        try {
+                            onOnboardingComplete()
+                        } catch (e: Exception) {
+                            Log.e("OnboardingScreen", "Error navigating after onboarding: ${e.message}", e)
+                            coroutineScope.launch {
+                                snackbarHostState.showSnackbar("Terjadi kesalahan, silakan coba lagi")
+                            }
+                        }
                     },
                     isDarkTheme = isDarkTheme
                 )
+            }
+
+            // Show loading overlay if loading
+            if (isLoading) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.3f))
+                        .zIndex(3f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
             }
         }
     }
@@ -191,7 +224,8 @@ fun ExactMatchForm(
     name: String,
     onNameChanged: (String) -> Unit,
     onSaveClicked: () -> Unit,
-    isDarkTheme: Boolean
+    isDarkTheme: Boolean,
+    isLoading: Boolean = false
 ) {
     // State untuk animasi
     var showContent by remember { mutableStateOf(false) }
@@ -320,6 +354,7 @@ fun ExactMatchForm(
             enter = fadeIn(animationSpec = tween(1100))
         ) {
             Box(
+                contentAlignment = Alignment.Center,
                 modifier = Modifier
                     .size(50.dp)
                     .border(
@@ -327,15 +362,22 @@ fun ExactMatchForm(
                         color = borderColor,
                         shape = RoundedCornerShape(8.dp)
                     )
-                    .clickable { onSaveClicked() },
-                contentAlignment = Alignment.Center
+                    .clickable(enabled = !isLoading) { onSaveClicked() }
             ) {
-                Icon(
-                    imageVector = Icons.Default.ArrowForward,
-                    contentDescription = "Konfirmasi",
-                    tint = iconTint,
-                    modifier = Modifier.size(24.dp)
-                )
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        strokeWidth = 2.dp,
+                        color = iconTint
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.ArrowForward,
+                        contentDescription = "Konfirmasi",
+                        tint = iconTint,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
             }
         }
     }
@@ -348,6 +390,7 @@ fun ExactMatchForm(
                 focusRequester.requestFocus()
             } catch (e: Exception) {
                 // Handle potential error when requesting focus
+                Log.e("OnboardingScreen", "Error requesting focus: ${e.message}")
             }
         }
     }

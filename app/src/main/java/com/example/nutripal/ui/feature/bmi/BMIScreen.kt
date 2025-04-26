@@ -71,23 +71,25 @@ fun BMIScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
-        // Content wrapper yang mengisi ruang secara tepat
+        // Note: Only applying minimal paddingValues for the status bar
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = paddingValues.calculateTopPadding())
+                // Apply only the safe drawing area at the top (status bar)
+                .padding(top = paddingValues.calculateTopPadding(), bottom = paddingValues.calculateBottomPadding())
                 .padding(horizontal = 16.dp)
-                .verticalScroll(rememberScrollState()),
+                .verticalScroll(rememberScrollState())
+                .animateContentSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            // Header
+            // Header dengan minimal padding dari atas
             Text(
                 text = "Kalkulator BMI",
                 style = MaterialTheme.typography.headlineLarge.copy(
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground
                 ),
-                modifier = Modifier.padding(top = 12.dp, bottom = 8.dp)
+                modifier = Modifier.padding(vertical = 0.dp)
             )
 
             // Main content

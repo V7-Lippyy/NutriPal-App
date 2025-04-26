@@ -13,6 +13,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
+import javax.inject.Named
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -36,6 +37,7 @@ object DataStoreModule {
 
     @Provides
     @Singleton
+    @Named("LocalUserRepository")
     fun provideUserRepository(
         userPreferences: UserPreferences
     ): IUserRepository {

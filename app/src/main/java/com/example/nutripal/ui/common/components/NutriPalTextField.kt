@@ -25,6 +25,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -41,7 +43,8 @@ fun NutriPalTextField(
     leadingIcon: @Composable (() -> Unit)? = null,
     trailingIcon: @Composable (() -> Unit)? = null,
     placeholderText: String = "",
-    maxLines: Int = 1
+    maxLines: Int = 1,
+    visualTransformation: VisualTransformation = VisualTransformation.None // Added parameter
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isFocused by interactionSource.collectIsFocusedAsState()
@@ -86,6 +89,7 @@ fun NutriPalTextField(
                 keyboardType = keyboardType,
                 imeAction = imeAction
             ),
+            visualTransformation = visualTransformation, // Pass the parameter to OutlinedTextField
             isError = isError,
             readOnly = readOnly,
             leadingIcon = leadingIcon,

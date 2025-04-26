@@ -31,6 +31,7 @@ import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.DirectionsRun
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.LocalFireDepartment
+import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.MonitorWeight
 import androidx.compose.material.icons.filled.Restaurant
@@ -59,7 +60,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
+import com.example.nutripal.ui.common.components.NutriPalButton
 import com.example.nutripal.ui.common.components.NutriPalCard
+import com.example.nutripal.ui.feature.auth.AuthViewModel
 import com.example.nutripal.ui.feature.foodlog.FoodLogViewModel
 import com.example.nutripal.ui.feature.onboarding.UserViewModel
 import kotlinx.coroutines.delay
@@ -75,8 +78,10 @@ fun HomeScreen(
     onNavigateToActivity: () -> Unit,
     onNavigateToNutrition: () -> Unit,
     onNavigateToFoodLog: () -> Unit,
+    onLogout: () -> Unit,
     foodLogViewModel: FoodLogViewModel = hiltViewModel(),
-    userViewModel: UserViewModel = hiltViewModel()
+    userViewModel: UserViewModel = hiltViewModel(),
+    authViewModel: AuthViewModel = hiltViewModel()
 ) {
     val foodLogUiState by foodLogViewModel.uiState.collectAsState()
     val userData by userViewModel.userData.collectAsState()
@@ -97,17 +102,32 @@ fun HomeScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp)
         ) {
-            // Welcome message with user name
-            if (userData.name.isNotBlank()) {
-                Text(
-                    text = "Selamat Datang, ${userData.name}!",
-                    style = MaterialTheme.typography.headlineSmall.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    ),
-                    modifier = Modifier.padding(bottom = 16.dp)
+            // Header with welcome message and logout button
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Welcome message with user name
+                if (userData.name.isNotBlank()) {
+                    Text(
+                        text = "Selamat Datang, ${userData.name}!",
+                        style = MaterialTheme.typography.headlineSmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        ),
+                    )
+                }
+
+                // Logout button
+                IconButton(
+                    onClick = onLogout,
+                    contentDescription = "Logout",
+                    iconTint = MaterialTheme.colorScheme.error
                 )
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             // Banner image carousel - pure images with correct aspect ratio
             BannerCarousel()
@@ -284,9 +304,46 @@ fun HomeScreen(
                 }
             }
 
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Logout Button
+            NutriPalButton(
+                text = "Logout",
+                onClick = onLogout,
+                backgroundColor = MaterialTheme.colorScheme.error,
+                contentColor = MaterialTheme.colorScheme.onError,
+                modifier = Modifier.fillMaxWidth()
+            )
+
             // Add bottom padding to avoid FAB overlap
             Spacer(modifier = Modifier.height(16.dp))
         }
+    }
+}
+
+/**
+ * A custom IconButton with icon and text for the logout functionality
+ */
+@Composable
+fun IconButton(
+    onClick: () -> Unit,
+    contentDescription: String,
+    iconTint: Color = MaterialTheme.colorScheme.onSurface,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(8.dp))
+            .clickable(onClick = onClick)
+            .padding(8.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = Icons.Default.Logout,
+            contentDescription = contentDescription,
+            tint = iconTint,
+            modifier = Modifier.size(24.dp)
+        )
     }
 }
 

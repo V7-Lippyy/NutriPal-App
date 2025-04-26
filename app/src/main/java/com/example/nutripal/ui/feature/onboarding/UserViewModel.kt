@@ -10,26 +10,25 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import javax.inject.Inject
+import javax.inject.Named
 
 /**
  * ViewModel untuk mengelola state OnboardingScreen dan data pengguna
  */
 @HiltViewModel
 class UserViewModel @Inject constructor(
-    private val userRepository: IUserRepository
+    @Named("LocalUserRepository") private val userRepository: IUserRepository
 ) : ViewModel() {
 
-    // UIState untuk layar onboarding
     private val _uiState = MutableStateFlow(OnboardingUiState())
     val uiState: StateFlow<OnboardingUiState> = _uiState.asStateFlow()
 
-    // State untuk data pengguna yang di-expose ke UI
     private val _userData = MutableStateFlow(UserData())
     val userData: StateFlow<UserData> = _userData.asStateFlow()
 
     init {
-        // Load data pengguna saat ViewModel dibuat
         viewModelScope.launch {
             userRepository.getUserData().collect { userData ->
                 _userData.value = userData
@@ -37,18 +36,15 @@ class UserViewModel @Inject constructor(
         }
     }
 
-    // Fungsi untuk mengupdate nama
     fun updateName(name: String) {
         _uiState.update { it.copy(name = name) }
     }
 
-    // Fungsi untuk validasi dan menyimpan data pengguna
     fun saveUserDataAndCompleteOnboarding(
         onSuccess: () -> Unit
     ) {
         val name = uiState.value.name.trim()
 
-        // Validasi input
         if (name.isBlank()) {
             _uiState.update { it.copy(errorMessage = "Nama tidak boleh kosong") }
             return
@@ -56,24 +52,34 @@ class UserViewModel @Inject constructor(
 
         viewModelScope.launch {
             try {
-                // Simpan data pengguna
+                // Show a loading indicator
+                _uiState.update { it.copy(isLoading = true) }
+
+                // Save user data first
                 userRepository.saveUserData(name)
 
-                // Tandai onboarding selesai
+                // Then complete onboarding in a separate call
                 userRepository.completeOnboarding()
 
-                // Reset error message
-                _uiState.update { it.copy(errorMessage = null) }
+                // Update UI state
+                _uiState.update { it.copy(errorMessage = null, isLoading = false) }
 
-                // Callback untuk sukses
+                // Add a small delay to ensure data is committed
+                delay(300)
+
+                // Finally call the success callback
                 onSuccess()
             } catch (e: Exception) {
-                _uiState.update { it.copy(errorMessage = "Gagal menyimpan data: ${e.message}") }
+                _uiState.update {
+                    it.copy(
+                        errorMessage = "Gagal menyimpan data: ${e.message}",
+                        isLoading = false
+                    )
+                }
             }
         }
     }
 
-    // Fungsi untuk mengecek apakah onboarding sudah selesai
     suspend fun hasCompletedOnboarding(): Boolean {
         return userRepository.hasCompletedOnboarding()
     }
@@ -84,5 +90,6 @@ class UserViewModel @Inject constructor(
  */
 data class OnboardingUiState(
     val name: String = "",
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val isLoading: Boolean = false
 )

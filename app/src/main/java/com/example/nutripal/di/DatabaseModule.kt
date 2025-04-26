@@ -12,6 +12,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
+import javax.inject.Named
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -24,9 +25,7 @@ object DatabaseModule {
             context,
             NutriPalDatabase::class.java,
             "nutripal_database"
-        )
-            .fallbackToDestructiveMigration() // In a production app, you'd use proper migrations
-            .build()
+        ).fallbackToDestructiveMigration().build()
     }
 
     @Provides
@@ -37,6 +36,7 @@ object DatabaseModule {
 
     @Provides
     @Singleton
+    @Named("LocalRepository")
     fun provideFoodEntryRepository(foodEntryDao: FoodEntryDao): IFoodEntryRepository {
         return FoodEntryRepository(foodEntryDao)
     }

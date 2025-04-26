@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "720560850652",
+    "project_id": "nutripal-b9fd3",
+    "storage_bucket": "nutripal-b9fd3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:720560850652:android:01057a7f45ee384b8f9619",
+        "android_client_info": {
+          "package_name": "com.example.nutripal"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD0KSjJ5eYTZs-of6nNe25g_q8AQWIiG50"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

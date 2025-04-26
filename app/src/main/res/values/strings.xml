@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">NutriPal</string>
+
+    <!-- Navigation -->
     <string name="splash">Splash</string>
+    <string name="onboarding">Onboarding</string>
     <string name="home">Beranda</string>
     <string name="bmi">BMI</string>
     <string name="daily_calorie">Kalori</string>
@@ -10,6 +13,40 @@
     <string name="food_log">Catatan</string>
     <string name="food_log_add">Tambah Makanan</string>
     <string name="food_log_edit">Edit Makanan</string>
+
+    <!-- Authentication -->
+    <string name="login">Masuk</string>
+    <string name="register">Daftar</string>
+    <string name="forgot_password">Lupa Password</string>
+    <string name="email">Email</string>
+    <string name="username">Username</string>
+    <string name="password">Password</string>
+    <string name="confirm_password">Konfirmasi Password</string>
+    <string name="login_title">Selamat Datang!</string>
+    <string name="login_subtitle">Masuk ke akun Anda untuk melanjutkan</string>
+    <string name="register_title">Buat Akun Baru</string>
+    <string name="register_subtitle">Daftar untuk mulai menggunakan NutriPal</string>
+    <string name="forgot_password_title">Lupa Password</string>
+    <string name="forgot_password_subtitle">Masukkan email Anda dan kami akan mengirimkan link untuk mereset password</string>
+    <string name="login_action">Masuk</string>
+    <string name="register_action">Daftar</string>
+    <string name="send_reset_email">Kirim Email Reset</string>
+    <string name="no_account">Belum punya akun? </string>
+    <string name="register_now">Daftar sekarang</string>
+    <string name="have_account">Sudah punya akun? </string>
+    <string name="login_now">Masuk</string>
+    <string name="back_to_login">Kembali ke login</string>
+    <string name="logout">Logout</string>
+    <string name="reset_email_sent">Email reset password telah dikirim. Silakan cek email Anda.</string>
+    <string name="error_email_format">Email tidak valid</string>
+    <string name="error_username_length">Username minimal 3 karakter</string>
+    <string name="error_password_length">Password minimal 6 karakter</string>
+    <string name="error_passwords_not_match">Password tidak sama</string>
+    <string name="error_email_username_empty">Email atau username tidak boleh kosong</string>
+    <string name="error_password_empty">Password tidak boleh kosong</string>
+    <string name="error_auth_failed">Autentikasi gagal</string>
+    <string name="error_username_exists">Username sudah digunakan</string>
+    <string name="error_email_exists">Email sudah digunakan</string>
 
     <!-- Common -->
     <string name="calculate">Hitung</string>
@@ -87,5 +124,4 @@
     <string name="food_empty_state">Belum ada catatan makanan</string>
     <string name="food_empty_state_hint">Tekan tombol + untuk menambahkan makanan yang dikonsumsi</string>
     <string name="total_calories">Total Kalori</string>
-    <string name="onboarding">Onboarding</string>
 </resources>
